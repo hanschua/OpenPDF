@@ -69,6 +69,7 @@
         <maven-release-plugin.version>3.0.1</maven-release-plugin.version>
         <maven-repository-plugin.version>2.4</maven-repository-plugin.version>
         <maven-source-plugin.version>3.3.0</maven-source-plugin.version>
+        <maven-surefire-plugin.version>3.2.3</maven-surefire-plugin.version>
         <maven.test.failure.ignore>false</maven.test.failure.ignore>
         <nexus-staging-maven-plugin.version>1.6.13</nexus-staging-maven-plugin.version>
         <pitest-junit5-plugin.version>1.2.1</pitest-junit5-plugin.version>
@@ -273,6 +274,11 @@
                         <arg>-Xlint:unchecked</arg>
                     </compilerArgs>
                 </configuration>
+            </plugin>
+            <!-- To execute the tests -->
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven-surefire-plugin.version}</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

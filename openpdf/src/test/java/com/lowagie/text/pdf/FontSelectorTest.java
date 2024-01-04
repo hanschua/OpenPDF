@@ -27,6 +27,6 @@ public class FontSelectorTest {
 
         PdfReader rd = new PdfReader(stream.toByteArray());
         PdfTextExtractor pdfTextExtractor = new PdfTextExtractor(rd);
-        Assertions.assertEquals(pdfTextExtractor.getTextFromPage(1), "ΧαίρετεGreek -");
+        Assertions.assertEquals("ΧαίρετεGreek -", pdfTextExtractor.getTextFromPage(1));
     }
 }
