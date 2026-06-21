@@ -61,8 +61,8 @@ import java.util.zip.DeflaterOutputStream;
 public class PRStream extends PdfStream {
 
     protected PdfReader reader;
-    protected int offset;
-    protected int length;
+    protected long offset;
+    protected long length;
 
     //added by ujihara for decryption
     protected int objNum = 0;
@@ -90,7 +90,7 @@ public class PRStream extends PdfStream {
         this.reader = reader;
     }
 
-    public PRStream(PdfReader reader, int offset) {
+    public PRStream(PdfReader reader, long offset) {
         this.reader = reader;
         this.offset = offset;
     }
@@ -182,11 +182,11 @@ public class PRStream extends PdfStream {
         setData(data, true);
     }
 
-    public int getOffset() {
+    public long getOffset() {
         return offset;
     }
 
-    public int getLength() {
+    public long getLength() {
         return length;
     }
 

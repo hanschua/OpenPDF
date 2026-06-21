@@ -68,11 +68,13 @@
 
 package org.openpdf.text.pdf;
 
-import org.openpdf.text.ExceptionConverter;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Objects;
+import org.openpdf.text.ExceptionConverter;
+import org.openpdf.text.error_messages.MessageLocalization;
+import org.openpdf.text.exceptions.InvalidPdfException;
 
 
 public class CFFFont {
@@ -404,7 +406,12 @@ public class CFFFont {
 
     int getPosition() {
         try {
-            return buf.getFilePointer();
+            long pos = buf.getFilePointer(); // assume font is smaller than 2^31
+            if (pos > Integer.MAX_VALUE) {
+                throw new InvalidPdfException(
+                        MessageLocalization.getComposedMessage("invalid.object.number.1", pos));
+            }
+            return (int) pos;
         } catch (Exception e) {
             throw new ExceptionConverter(e);
         }

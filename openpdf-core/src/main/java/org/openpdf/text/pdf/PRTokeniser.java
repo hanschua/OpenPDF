@@ -144,37 +144,37 @@ public class PRTokeniser implements AutoCloseable {
         return -1;
     }
 
-    public static int[] checkObjectStart(byte[] line) {
+    public static long[] checkObjectStart(byte[] line) {
         try {
             PRTokeniser tk = new PRTokeniser(line);
-            int num = 0;
-            int gen = 0;
+            long num = 0;
+            long gen = 0;
             if (!tk.nextToken() || tk.getTokenType() != TK_NUMBER) {
                 return null;
             }
-            num = tk.intValue();
+            num = tk.longValue();
             if (!tk.nextToken() || tk.getTokenType() != TK_NUMBER) {
                 return null;
             }
-            gen = tk.intValue();
+            gen = tk.longValue();
             if (!tk.nextToken()) {
                 return null;
             }
             if (!tk.getStringValue().equals("obj")) {
                 return null;
             }
-            return new int[]{num, gen};
+            return new long[]{num, gen};
         } catch (Exception ioe) {
             // empty on purpose
         }
         return null;
     }
 
-    public void seek(int pos) throws IOException {
+    public void seek(long pos) throws IOException {
         file.seek(pos);
     }
 
-    public int getFilePointer() throws IOException {
+    public long getFilePointer() throws IOException {
         return file.getFilePointer();
     }
 
@@ -182,7 +182,7 @@ public class PRTokeniser implements AutoCloseable {
         file.close();
     }
 
-    public int length() throws IOException {
+    public long length() throws IOException {
         return file.length();
     }
 
@@ -270,10 +270,10 @@ public class PRTokeniser implements AutoCloseable {
         file.setStartOffset(idx);
     }
 
-    public int getStartxref() throws IOException {
+    public long getStartxref() throws IOException {
         int step = 1024; // packet size to read the file from the end
         int delta = 8; // delta to provide packets overlapping in case 'startxref' appears split between two packets
-        int pos = file.length() - delta;
+        long pos = file.length() - delta;
         int idx;
         do {
             pos = Math.max(0, pos - step);
@@ -291,7 +291,7 @@ public class PRTokeniser implements AutoCloseable {
         int level = 0;
         String n1 = null;
         String n2 = null;
-        int ptr = 0;
+        long ptr = 0;
         while (nextToken() || level == 2) {
             if (type == TK_COMMENT) {
                 continue;
@@ -574,6 +574,10 @@ public class PRTokeniser implements AutoCloseable {
         return Integer.parseInt(stringValue);
     }
 
+    public long longValue() {
+        return Long.parseLong(stringValue);
+    }
+
     public boolean readLineSegment(byte[] input) throws IOException {
         int c = -1;
         boolean eol = false;
@@ -595,7 +599,7 @@ public class PRTokeniser implements AutoCloseable {
                     break;
                 case '\r':
                     eol = true;
-                    int cur = getFilePointer();
+                    long cur = getFilePointer();
                     if ((read()) != '\n') {
                         seek(cur);
                     }
@@ -622,7 +626,7 @@ public class PRTokeniser implements AutoCloseable {
                         break;
                     case '\r':
                         eol = true;
-                        int cur = getFilePointer();
+                        long cur = getFilePointer();
                         if ((read()) != '\n') {
                             seek(cur);
                         }

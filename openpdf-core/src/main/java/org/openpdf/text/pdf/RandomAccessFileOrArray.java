@@ -84,7 +84,7 @@ public class RandomAccessFileOrArray implements DataInput, Closeable {
     /**
      * Holds value of property startOffset.
      */
-    private int startOffset = 0;
+    private long startOffset = 0;
 
     public RandomAccessFileOrArray(String filename) throws IOException {
         this(filename, false, Document.plainRandomAccess);
@@ -263,9 +263,9 @@ public class RandomAccessFileOrArray implements DataInput, Closeable {
                 adj = 1;
             }
         }
-        int pos;
-        int len;
-        int newpos;
+        long pos;
+        long len;
+        long newpos;
 
         pos = getFilePointer();
         len = length();
@@ -276,7 +276,7 @@ public class RandomAccessFileOrArray implements DataInput, Closeable {
         seek(newpos);
 
         /* return the actual number of bytes skipped */
-        return newpos - pos + adj;
+        return (int) (newpos - pos + adj);
     }
 
     public void reOpen() throws IOException {
@@ -315,16 +315,16 @@ public class RandomAccessFileOrArray implements DataInput, Closeable {
         }
     }
 
-    public int length() throws IOException {
+    public long length() throws IOException {
         if (arrayIn == null) {
             insureOpen();
-            return (int) (plainRandomAccess ? trf.length() : rf.length()) - startOffset;
+            return (plainRandomAccess ? trf.length() : rf.length()) - startOffset;
         } else {
             return arrayIn.length - startOffset;
         }
     }
 
-    public void seek(int pos) throws IOException {
+    public void seek(long pos) throws IOException {
         pos += startOffset;
         isBack = false;
         if (arrayIn == null) {
@@ -335,19 +335,16 @@ public class RandomAccessFileOrArray implements DataInput, Closeable {
                 rf.seek(pos);
             }
         } else {
-            arrayInPtr = pos;
+            // array is limited to 2^31 so assume can't overflow
+            arrayInPtr = (int) pos;
         }
     }
 
-    public void seek(long pos) throws IOException {
-        seek((int) pos);
-    }
-
-    public int getFilePointer() throws IOException {
+    public long getFilePointer() throws IOException {
         insureOpen();
         int n = isBack ? 1 : 0;
         if (arrayIn == null) {
-            return (int) (plainRandomAccess ? trf.getFilePointer() : rf.getFilePointer()) - n - startOffset;
+            return (plainRandomAccess ? trf.getFilePointer() : rf.getFilePointer()) - n - startOffset;
         } else {
             return arrayInPtr - n - startOffset;
         }
@@ -595,7 +592,7 @@ public class RandomAccessFileOrArray implements DataInput, Closeable {
                     break;
                 case '\r':
                     eol = true;
-                    int cur = getFilePointer();
+                    long cur = getFilePointer();
                     if ((read()) != '\n') {
                         seek(cur);
                     }
@@ -621,7 +618,7 @@ public class RandomAccessFileOrArray implements DataInput, Closeable {
      *
      * @return Value of property startOffset.
      */
-    public int getStartOffset() {
+    public long getStartOffset() {
         return this.startOffset;
     }
 
@@ -630,7 +627,7 @@ public class RandomAccessFileOrArray implements DataInput, Closeable {
      *
      * @param startOffset New value of property startOffset.
      */
-    public void setStartOffset(int startOffset) {
+    public void setStartOffset(long startOffset) {
         this.startOffset = startOffset;
     }
 
