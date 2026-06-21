@@ -3,8 +3,8 @@
  * http://jakarta.apache.org/commons/lang/xref/org/apache/commons/lang/IntHashMap.html
  * It was adapted by Bruno Lowagie for use in iText,
  * reusing methods that were written by Paulo Soares.
- * Instead of being a hashtable that stores objects with an int as key,
- * it stores int values with an int as key.
+ * Instead of being a hashtable that stores objects with an long as key,
+ * it stores long values with an long as key.
  *
  * This is the original license of the original class IntHashMap:
  *
@@ -29,25 +29,20 @@
 
 package org.openpdf.text.pdf;
 
-import org.openpdf.text.error_messages.MessageLocalization;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.NoSuchElementException;
+import org.openpdf.text.error_messages.MessageLocalization;
 
 /***
- * <p>A hash map that uses primitive ints for the key rather than objects.</p>
+ * <p>A hash map that uses primitive longs for the key rather than objects.</p>
  *
  * <p>Note that this class is for internal optimization purposes only, and may
  * not be supported in future releases of Jakarta Commons Lang.  Utilities of
  * this sort may be included in future releases of Jakarta Commons Collections.</p>
- *
- * @author Justin Couch
- * @author Alex Chaffee (alex@apache.org)
- * @author Stephen Colebourne
- * @author Bruno Lowagie (change Objects as keys into int values)
- * @author Paulo Soares (added extra methods)
  */
-public class IntHashtable implements Cloneable {
+public class LongHashtable implements Cloneable {
 
     /***
      * The hash table data.
@@ -78,7 +73,7 @@ public class IntHashtable implements Cloneable {
      * <p>Constructs a new, empty hashtable with a default capacity and load
      * factor, which is <code>20</code> and <code>0.75</code> respectively.</p>
      */
-    public IntHashtable() {
+    public LongHashtable() {
         this(150, 0.75f);
     }
 
@@ -90,7 +85,7 @@ public class IntHashtable implements Cloneable {
      * @throws IllegalArgumentException if the initial capacity is less
      *   than zero.
      */
-    public IntHashtable(int initialCapacity) {
+    public LongHashtable(int initialCapacity) {
         this(initialCapacity, 0.75f);
     }
 
@@ -103,7 +98,7 @@ public class IntHashtable implements Cloneable {
      * @throws IllegalArgumentException  if the initial capacity is less
      *             than zero, or if the load factor is nonpositive.
      */
-    public IntHashtable(int initialCapacity, float loadFactor) {
+    public LongHashtable(int initialCapacity, float loadFactor) {
         super();
         if (initialCapacity < 0) {
             throw new IllegalArgumentException(
@@ -154,11 +149,11 @@ public class IntHashtable implements Cloneable {
      *             determined by the <code>equals</code> method;
      *             <code>false</code> otherwise.
      * @throws NullPointerException  if the value is <code>null</code>.
-     * @see        #containsKey(int)
-     * @see        #containsValue(int)
+     * @see        #containsKey(long)
+     * @see        #containsValue(long)
      * @see        java.util.Map
      */
-    public boolean contains(int value) {
+    public boolean contains(long value) {
 
         Entry[] tab = table;
         for (int i = tab.length; i-- > 0; ) {
@@ -183,23 +178,23 @@ public class IntHashtable implements Cloneable {
      * @see    java.util.Map
      * @since JDK1.2
      */
-    public boolean containsValue(int value) {
+    public boolean containsValue(long value) {
         return contains(value);
     }
 
     /***
-     * <p>Tests if the specified int is a key in this hashtable.</p>
+     * <p>Tests if the specified long is a key in this hashtable.</p>
      *
      * @param  key  possible key.
-     * @return <code>true</code> if and only if the specified int is a
+     * @return <code>true</code> if and only if the specified long is a
      *    key in this hashtable, as determined by the <code>equals</code>
      *    method; <code>false</code> otherwise.
-     * @see #contains(int)
+     * @see #contains(long)
      */
-    public boolean containsKey(int key) {
+    public boolean containsKey(long key) {
         Entry[] tab = table;
-        int hash = key;
-        int index = (hash & 0x7FFFFFFF) % tab.length;
+        long hash = key;
+        int index = computeHashIndex(hash, tab.length);
         for (Entry e = tab[index]; e != null; e = e.next) {
             if (e.hash == hash && e.key == key) {
                 return true;
@@ -215,18 +210,34 @@ public class IntHashtable implements Cloneable {
      * @return the value to which the key is mapped in this hashtable;
      *          <code>null</code> if the key is not mapped to any value in
      *          this hashtable.
-     * @see     #put(int, int)
+     * @see     #put(long, long)
      */
-    public int get(int key) {
+    public long get(long key) {
         Entry[] tab = table;
-        int hash = key;
-        int index = (hash & 0x7FFFFFFF) % tab.length;
+        long hash = key;
+        int index = computeHashIndex(hash, tab.length);
         for (Entry e = tab[index]; e != null; e = e.next) {
             if (e.hash == hash && e.key == key) {
                 return e.value;
             }
         }
         return 0;
+    }
+
+    /***
+     * Computes a safe, well-distributed hash index for a given 64-bit key.
+     * <p>
+     * This method mixes the upper and lower bits of the long key via {@link Long#hashCode(long)},
+     * masks out the sign bit to guarantee a positive integer, and maps it within the bounds
+     * of the specified capacity.
+     *
+     * @param key      the 64-bit key to hash
+     * @param capacity the current bucket capacity of the hashtable; must be greater than 0
+     * @return a valid array index between {@code 0} (inclusive) and {@code capacity} (exclusive)
+     * @throws ArithmeticException if capacity is 0 or negative
+     */
+    private static int computeHashIndex(long key, int capacity) {
+        return (Long.hashCode(key) & 0x7FFFFFFF) % capacity;
     }
 
     /***
@@ -253,7 +264,7 @@ public class IntHashtable implements Cloneable {
                 Entry e = old;
                 old = old.next;
 
-                int index = (e.hash & 0x7FFFFFFF) % newCapacity;
+                int index = computeHashIndex(e.hash, newCapacity);
                 e.next = newMap[index];
                 newMap[index] = e;
             }
@@ -273,16 +284,16 @@ public class IntHashtable implements Cloneable {
      * @return the previous value of the specified key in this hashtable,
      *         or <code>null</code> if it did not have one.
      * @throws NullPointerException  if the key is <code>null</code>.
-     * @see     #get(int)
+     * @see     #get(long)
      */
-    public int put(int key, int value) {
+    public long put(long key, long value) {
         // Makes sure the key is not already in the hashtable.
         Entry[] tab = table;
-        int hash = key;
-        int index = (hash & 0x7FFFFFFF) % tab.length;
+        long hash = key;
+        int index = computeHashIndex(hash, tab.length);
         for (Entry e = tab[index]; e != null; e = e.next) {
             if (e.hash == hash && e.key == key) {
-                int old = e.value;
+                long old = e.value;
                 e.value = value;
                 return old;
             }
@@ -293,7 +304,7 @@ public class IntHashtable implements Cloneable {
             rehash();
 
             tab = table;
-            index = (hash & 0x7FFFFFFF) % tab.length;
+            index = computeHashIndex(hash, tab.length);
         }
 
         // Creates the new entry.
@@ -314,10 +325,10 @@ public class IntHashtable implements Cloneable {
      * @return the value to which the key had been mapped in this hashtable,
      *          or <code>null</code> if the key did not have a mapping.
      */
-    public int remove(int key) {
+    public long remove(long key) {
         Entry[] tab = table;
-        int hash = key;
-        int index = (hash & 0x7FFFFFFF) % tab.length;
+        long hash = key;
+        int index = computeHashIndex(hash, tab.length);
         for (Entry e = tab[index], prev = null; e != null; prev = e, e = e.next) {
             if (e.hash == hash && e.key == key) {
                 if (prev != null) {
@@ -326,7 +337,7 @@ public class IntHashtable implements Cloneable {
                     tab[index] = e.next;
                 }
                 count--;
-                int oldValue = e.value;
+                long oldValue = e.value;
                 e.value = 0;
                 return oldValue;
             }
@@ -346,19 +357,19 @@ public class IntHashtable implements Cloneable {
     }
 
     public Iterator<Entry> getEntryIterator() {
-        return new IntHashtableIterator(table);
+        return new LongHashtableIterator(table);
     }
 
-    public int[] toOrderedKeys() {
-        int[] res = getKeys();
+    public long[] toOrderedKeys() {
+        long[] res = getKeys();
         Arrays.sort(res);
         return res;
     }
 
 // extra methods by Paulo Soares:
 
-    public int[] getKeys() {
-        int[] res = new int[count];
+    public long[] getKeys() {
+        long[] res = new long[count];
         int ptr = 0;
         int index = table.length;
         Entry entry = null;
@@ -378,7 +389,7 @@ public class IntHashtable implements Cloneable {
         return res;
     }
 
-    public int getOneKey() {
+    public long getOneKey() {
         if (count == 0) {
             return 0;
         }
@@ -393,9 +404,10 @@ public class IntHashtable implements Cloneable {
         return entry.key;
     }
 
+    @Override
     public Object clone() {
         try {
-            IntHashtable t = (IntHashtable) super.clone();
+            LongHashtable t = (LongHashtable) super.clone();
             t.table = new Entry[table.length];
             for (int i = table.length; i-- > 0; ) {
                 t.table[i] = (table[i] != null)
@@ -409,25 +421,25 @@ public class IntHashtable implements Cloneable {
     }
 
     /***
-     * <p>Innerclass that acts as a datastructure to create a new entry in the
+     * <p>Inner class that acts as a data structure to create a new entry in the
      * table.</p>
      */
     static class Entry {
 
-        int hash;
-        int key;
-        int value;
+        long hash;
+        long key;
+        long value;
         Entry next;
 
         /***
          * <p>Create a new entry with the given values.</p>
          *
-         * @param hash The code used to hash the int with
+         * @param hash The code used to hash the long with
          * @param key The key used to enter this in the table
          * @param value The value for this key
          * @param next A reference to the next entry in the table
          */
-        protected Entry(int hash, int key, int value, Entry next) {
+        protected Entry(long hash, long key, long value, Entry next) {
             this.hash = hash;
             this.key = key;
             this.value = value;
@@ -435,32 +447,34 @@ public class IntHashtable implements Cloneable {
         }
 
         // extra methods for inner class Entry by Paulo
-        public int getKey() {
+        public long getKey() {
             return key;
         }
 
-        public int getValue() {
+        public long getValue() {
             return value;
         }
 
+        @Override
         protected Object clone() {
-            Entry entry = new Entry(hash, key, value, (next != null) ? (Entry) next.clone() : null);
-            return entry;
+            return new Entry(hash, key, value, (next != null) ? (Entry) next.clone() : null);
         }
+
     }
 
     // extra inner class by Paulo
-    static class IntHashtableIterator implements Iterator<Entry> {
+    static class LongHashtableIterator implements Iterator<Entry> {
 
         int index;
         Entry[] table;
         Entry entry;
 
-        IntHashtableIterator(Entry[] table) {
+        LongHashtableIterator(Entry[] table) {
             this.table = table;
             this.index = table.length;
         }
 
+        @Override
         public boolean hasNext() {
             if (entry != null) {
                 return true;
@@ -473,6 +487,7 @@ public class IntHashtable implements Cloneable {
             return false;
         }
 
+        @Override
         public Entry next() {
             if (entry == null) {
                 while ((index-- > 0) && ((entry = table[index]) == null)) {
@@ -487,6 +502,7 @@ public class IntHashtable implements Cloneable {
             throw new NoSuchElementException(MessageLocalization.getComposedMessage("inthashtableiterator"));
         }
 
+        @Override
         public void remove() {
             throw new UnsupportedOperationException(MessageLocalization.getComposedMessage("remove.not.supported"));
         }
